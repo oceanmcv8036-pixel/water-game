@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rain Effect Web Design</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom, #1a2980, #26d0ce);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .card p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Rain container */
+        #rain-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Raindrop styles */
+        .raindrop {
+            position: absolute;
+            width: 2px;
+            height: 15px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2));
+            border-radius: 0 0 5px 5px;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+
+        /* Splash effect */
+        .splash {
+            position: absolute;
+            width: 15px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            opacity: 0;
+            animation: splash 0.5s ease-out forwards;
+        }
+
+        @keyframes splash {
+            0% {
+                opacity: 1;
+                transform: scale(0);
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="rain-container"></div>
+    
+    <div class="container">
+        <header>
+            <h1>Rain Effect Web Design</h1>
+            <p class="subtitle">A soothing rainy day experience in your browser</p>
+        </header>
+        
+        <div class="content">
+            <div class="card">
+                <h2>About This Effect</h2>
+                <p>This webpage features a realistic rain animation created with pure JavaScript and CSS. The raindrops fall at different speeds and angles to simulate a natural rainfall.</p>
+                <p>You can control the intensity of the rain using the buttons below to create anything from a light drizzle to a heavy downpour.</p>
+            </div>
+            
+            <div class="card">
+                <h2>How It Works</h2>
+                <p>The rain effect is generated by creating multiple raindrop elements with JavaScript and animating them using CSS keyframes.</p>
+                <p>Each raindrop has a random size, speed, and starting position to create a more natural appearance. Splash effects are added when raindrops reach the bottom of the screen.</p>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="light-rain">Light Rain</button>
+            <button id="medium-rain">Medium Rain</button>
+            <button id="heavy-rain">Heavy Rain</button>
+            <button id="stop-rain">Stop Rain</button>
+        </div>
+        
+        <footer>
+            <p>Created with HTML, CSS, and JavaScript | Rain Effect Demo</p>
+        </footer>
+    </div>
+
+    <script src="referenceCodeJS.js"></script>
+</body>
+</html>
