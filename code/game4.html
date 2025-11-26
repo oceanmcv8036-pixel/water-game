@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaky Bucket Rain Catcher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom, #1a2980, #26d0ce);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            height: 500px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Water Container Player */
+        .player {
+            position: absolute;
+            bottom: 20px;
+            width: 100px;
+            height: 80px;
+            transition: all 0.1s;
+        }
+
+        .bucket {
+            position: absolute;
+            width: 100%;
+            height: 70px;
+            background: linear-gradient(to right, #8B4513, #A0522D);
+            border-radius: 0 0 10px 10px;
+            border: 3px solid #5D4037;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .bucket-handle {
+            position: absolute;
+            top: -15px;
+            left: 10px;
+            width: 80px;
+            height: 20px;
+            border: 5px solid #5D4037;
+            border-bottom: none;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .water {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(to top, rgba(64, 164, 223, 0.9), rgba(100, 200, 255, 0.7));
+            border-radius: 0 0 7px 7px;
+            transition: height 0.3s;
+        }
+
+        .leak {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            animation: leak-pulse 1s infinite;
+            z-index: 5;
+        }
+
+        @keyframes leak-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .raindrop-game {
+            position: absolute;
+            width: 15px;
+            height: 25px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(173, 216, 230, 0.7));
+            border-radius: 0 0 10px 10px;
+            animation: fall-game linear forwards;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-top: 0.5rem;
+            color: #4facfe;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .instructions h2 {
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .instructions ul {
+            list-style-type: none;
+            padding-left: 1rem;
+        }
+
+        .instructions li {
+            margin-bottom: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .instructions li:before {
+            content: "•";
+            color: #4facfe;
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Rain container */
+        #rain-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Raindrop styles */
+        .raindrop {
+            position: absolute;
+            width: 2px;
+            height: 15px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2));
+            border-radius: 0 0 5px 5px;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh);
+            }
+        }
+
+        @keyframes fall-game {
+            to {
+                transform: translateY(500px);
+            }
+        }
+
+        /* Splash effect */
+        .splash {
+            position: absolute;
+            width: 15px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            opacity: 0;
+            animation: splash 0.5s ease-out forwards;
+        }
+
+        @keyframes splash {
+            0% {
+                opacity: 1;
+                transform: scale(0);
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1);
+            }
+        }
+
+        /* Game over screen */
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            border-radius: 15px;
+        }
+
+        .game-over h2 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #ff6b6b;
+        }
+
+        .game-over p {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .victory {
+            color: #4facfe !important;
+        }
+
+        /* Water level indicator */
+        .water-level {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        .water-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(to top, rgba(64, 164, 223, 0.9), rgba(100, 200, 255, 0.7));
+            transition: height 0.5s;
+        }
+
+        .goal-marker {
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: #ff6b6b;
+            top: 20%;
+            left: 0;
+        }
+
+        .goal-text {
+            position: absolute;
+            top: 18%;
+            right: 35px;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        /* Leak animation */
+        .leak-drop {
+            position: absolute;
+            width: 6px;
+            height: 8px;
+            background: rgba(100, 200, 255, 0.8);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            animation: leak-fall 1.5s ease-in forwards;
+            z-index: 4;
+        }
+
+        @keyframes leak-fall {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+                width: 6px;
+                height: 8px;
+            }
+            70% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(50px);
+                opacity: 0;
+                width: 4px;
+                height: 6px;
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .game-container {
+                height: 400px;
+            }
+            
+            .score-board {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .player {
+                width: 80px;
+                height: 64px;
+            }
+            
+            .bucket-handle {
+                width: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="rain-container"></div>
+    
+    <div class="container">
+        <header>
+            <h1>Leaky Bucket Rain Catcher</h1>
+            <p class="subtitle">Fill your bucket to 80% despite the random leaks!</p>
+        </header>
+        
+        <div class="game-area">
+            <div class="game-container" id="game-container">
+                <div class="water-level">
+                    <div class="goal-marker"></div>
+                    <div class="goal-text">GOAL</div>
+                    <div class="water-fill" id="water-fill"></div>
+                </div>
+                <div class="player" id="player">
+                    <div class="bucket-handle"></div>
+                    <div class="bucket">
+                        <div class="water" id="bucket-water"></div>
+                    </div>
+                </div>
+                <!-- Raindrops will be generated here by JavaScript -->
+                <div class="game-over" id="game-over" style="display: none;">
+                    <h2 id="game-result">Game Over!</h2>
+                    <p>Your Score: <span id="final-score">0</span></p>
+                    <p>Water Collected: <span id="final-water">0</span>%</p>
+                    <button id="restart-button">Play Again</button>
+                </div>
+            </div>
+            
+            <div class="score-board">
+                <div class="score-item">
+                    <h3>Score</h3>
+                    <div class="score-value" id="score">0</div>
+                </div>
+                <div class="score-item">
+                    <h3>Lives</h3>
+                    <div class="score-value" id="lives">3</div>
+                </div>
+                <div class="score-item">
+                    <h3>Water</h3>
+                    <div class="score-value" id="water-display">0%</div>
+                </div>
+                <div class="score-item">
+                    <h3>Time</h3>
+                    <div class="score-value" id="time">60</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="start-button">Start Game</button>
+            <button id="pause-button">Pause</button>
+            <button id="light-rain">Light Rain</button>
+            <button id="heavy-rain">Heavy Rain</button>
+        </div>
+        
+        <div class="instructions">
+            <h2>How to Play</h2>
+            <ul>
+                <li>Use your mouse or touch to move the water container at the bottom</li>
+                <li>Catch the blue raindrops to fill your container and earn points</li>
+                <li>Watch out! There's a 10% chance each raindrop causes a leak</li>
+                <li>Leaks appear at random positions on your bucket</li>
+                <li>Leaks reduce your water level by 1% each second</li>
+                <li>Fill your bucket to 80% to win before time runs out!</li>
+                <li>Avoid missing raindrops - you lose a life for each one that hits the ground</li>
+            </ul>
+        </div>
+        
+        <footer>
+            <p>Created with HTML, CSS, and JavaScript | Leaky Bucket Rain Catcher</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Game variables
+            const gameContainer = document.getElementById('game-container');
+            const player = document.getElementById('player');
+            const bucketWater = document.getElementById('bucket-water');
+            const waterFill = document.getElementById('water-fill');
+            const scoreElement = document.getElementById('score');
+            const livesElement = document.getElementById('lives');
+            const waterDisplayElement = document.getElementById('water-display');
+            const timeElement = document.getElementById('time');
+            const gameOverScreen = document.getElementById('game-over');
+            const gameResultElement = document.getElementById('game-result');
+            const finalScoreElement = document.getElementById('final-score');
+            const finalWaterElement = document.getElementById('final-water');
+            
+            let score = 0;
+            let lives = 3;
+            let waterLevel = 0;
+            let timeLeft = 60;
+            let gameActive = false;
+            let gameInterval;
+            let raindropInterval;
+            let timerInterval;
+            let leakActive = false;
+            let leakInterval;
+            let currentLeakPosition = { x: 0, y: 0 };
+            const WATER_GOAL = 80;
+            
+            // Background rain variables
+            const rainContainer = document.getElementById('rain-container');
+            let rainInterval;
+            let rainIntensity = 100;
+            
+            // Create background raindrops
+            function createRaindrop() {
+                const raindrop = document.createElement('div');
+                raindrop.classList.add('raindrop');
+                
+                // Random properties for each raindrop
+                const left = Math.random() * 100;
+                const animationDuration = 0.5 + Math.random() * 1.5;
+                const opacity = 0.3 + Math.random() * 0.7;
+                const height = 10 + Math.random() * 20;
+                const width = 1 + Math.random() * 2;
+                
+                // Apply random properties
+                raindrop.style.left = `${left}vw`;
+                raindrop.style.animationDuration = `${animationDuration}s`;
+                raindrop.style.opacity = opacity;
+                raindrop.style.height = `${height}px`;
+                raindrop.style.width = `${width}px`;
+                
+                // Add to container
+                rainContainer.appendChild(raindrop);
+                
+                // Remove raindrop after animation completes and create splash
+                setTimeout(() => {
+                    createSplash(left);
+                    raindrop.remove();
+                }, animationDuration * 1000);
+            }
+            
+            // Create splash effect
+            function createSplash(left) {
+                const splash = document.createElement('div');
+                splash.classList.add('splash');
+                
+                splash.style.left = `${left}vw`;
+                splash.style.bottom = '0';
+                splash.style.animationDuration = `${0.3 + Math.random() * 0.4}s`;
+                
+                rainContainer.appendChild(splash);
+                
+                // Remove splash after animation
+                setTimeout(() => {
+                    splash.remove();
+                }, 1000);
+            }
+            
+            // Start background rain with specified intensity
+            function startRain(intensity) {
+                // Clear any existing rain
+                stopRain();
+                
+                // Set new intensity
+                rainIntensity = intensity;
+                
+                // Create initial raindrops
+                for (let i = 0; i < intensity; i++) {
+                    setTimeout(() => createRaindrop(), Math.random() * 2000);
+                }
+                
+                // Continue creating raindrops
+                rainInterval = setInterval(() => {
+                    createRaindrop();
+                }, 1000 / intensity);
+            }
+            
+            // Stop background rain
+            function stopRain() {
+                clearInterval(rainInterval);
+                rainContainer.innerHTML = '';
+            }
+            
+            // Game functions
+            function startGame() {
+                if (gameActive) return;
+                
+                resetGame();
+                gameActive = true;
+                
+                // Start game intervals
+                gameInterval = setInterval(updateGame, 16); // ~60fps
+                raindropInterval = setInterval(createGameRaindrop, 1000);
+                timerInterval = setInterval(updateTimer, 1000);
+                
+                // Start background rain
+                startRain(100);
+            }
+            
+            function pauseGame() {
+                if (!gameActive) return;
+                
+                gameActive = false;
+                clearInterval(gameInterval);
+                clearInterval(raindropInterval);
+                clearInterval(timerInterval);
+                if (leakInterval) clearInterval(leakInterval);
+                stopRain();
+            }
+            
+            function resetGame() {
+                score = 0;
+                lives = 3;
+                waterLevel = 0;
+                timeLeft = 60;
+                leakActive = false;
+                
+                scoreElement.textContent = score;
+                livesElement.textContent = lives;
+                waterDisplayElement.textContent = `${waterLevel}%`;
+                timeElement.textContent = timeLeft;
+                
+                // Update water visuals
+                updateWaterVisuals();
+                
+                // Clear any leaks
+                const leaks = document.querySelectorAll('.leak');
+                leaks.forEach(leak => leak.remove());
+                
+                // Clear game container
+                const raindrops = document.querySelectorAll('.raindrop-game');
+                raindrops.forEach(drop => drop.remove());
+                
+                // Hide game over screen
+                gameOverScreen.style.display = 'none';
+            }
+            
+            function updateGame() {
+                // Check for collisions
+                const playerRect = player.getBoundingClientRect();
+                const raindrops = document.querySelectorAll('.raindrop-game');
+                
+                raindrops.forEach(drop => {
+                    const dropRect = drop.getBoundingClientRect();
+                    
+                    // Check if raindrop is caught by player
+                    if (
+                        dropRect.bottom >= playerRect.top + 20 && // Offset to account for bucket handle
+                        dropRect.right >= playerRect.left &&
+                        dropRect.left <= playerRect.right
+                    ) {
+                        // Increase score and water level
+                        score += 10;
+                        waterLevel += 3;
+                        if (waterLevel > 100) waterLevel = 100;
+                        
+                        scoreElement.textContent = score;
+                        waterDisplayElement.textContent = `${waterLevel}%`;
+                        updateWaterVisuals();
+                        
+                        // Create splash effect in bucket
+                        createBucketSplash();
+                        
+                        // 10% chance to start a leak
+                        if (Math.random() < 0.1 && !leakActive) {
+                            startLeak();
+                        }
+                        
+                        // Check for victory
+                        if (waterLevel >= WATER_GOAL) {
+                            victory();
+                        }
+                        
+                        // Remove raindrop
+                        drop.remove();
+                    }
+                    
+                    // Check if raindrop hit the ground
+                    if (dropRect.bottom >= gameContainer.getBoundingClientRect().bottom) {
+                        // Decrease lives
+                        lives--;
+                        livesElement.textContent = lives;
+                        
+                        // Remove raindrop
+                        drop.remove();
+                        
+                        // Check for game over
+                        if (lives <= 0) {
+                            endGame();
+                        }
+                    }
+                });
+            }
+            
+            function startLeak() {
+                leakActive = true;
+                
+                // Generate random leak position on the bucket
+                const playerRect = player.getBoundingClientRect();
+                const bucketWidth = playerRect.width;
+                const bucketHeight = 70; // Height of the bucket
+                
+                // Random position along the bottom of the bucket (but not too close to edges)
+                const leakX = Math.random() * (bucketWidth - 20) + 10;
+                const leakY = bucketHeight - 5; // Near the bottom of the bucket
+                
+                currentLeakPosition = { x: leakX, y: leakY };
+                
+                // Create leak visual on bucket at the random position
+                const leak = document.createElement('div');
+                leak.classList.add('leak');
+                leak.style.left = `${leakX}px`;
+                leak.style.bottom = `${leakY}px`;
+                player.appendChild(leak);
+                
+                // Start leak effect - reduce water by 1% every second
+                leakInterval = setInterval(() => {
+                    if (waterLevel > 0) {
+                        waterLevel -= 1;
+                        waterDisplayElement.textContent = `${waterLevel}%`;
+                        updateWaterVisuals();
+                        
+                        // Create leak drop animation from the same position
+                        createLeakDrop();
+                        
+                        // Stop leak if bucket is empty
+                        if (waterLevel <= 0) {
+                            stopLeak();
+                        }
+                    }
+                }, 1000);
+            }
+            
+            function stopLeak() {
+                leakActive = false;
+                clearInterval(leakInterval);
+                
+                // Remove leak visual
+                const leak = document.querySelector('.leak');
+                if (leak) leak.remove();
+            }
+            
+            function createLeakDrop() {
+                const leakDrop = document.createElement('div');
+                leakDrop.classList.add('leak-drop');
+                
+                // Get the player's position
+                const playerRect = player.getBoundingClientRect();
+                
+                // Position the leak drop at the exact leak position
+                leakDrop.style.left = `${playerRect.left + currentLeakPosition.x}px`;
+                leakDrop.style.bottom = `${playerRect.bottom + (80 - currentLeakPosition.y)}px`;
+                
+                document.body.appendChild(leakDrop);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    if (leakDrop.parentNode) {
+                        leakDrop.remove();
+                    }
+                }, 1500);
+            }
+            
+            function updateWaterVisuals() {
+                // Update bucket water level
+                bucketWater.style.height = `${waterLevel}%`;
+                
+                // Update water level indicator
+                waterFill.style.height = `${waterLevel}%`;
+            }
+            
+            function createBucketSplash() {
+                // Create a small splash animation in the bucket
+                const splash = document.createElement('div');
+                splash.style.position = 'absolute';
+                splash.style.width = '20px';
+                splash.style.height = '10px';
+                splash.style.borderRadius = '50%';
+                splash.style.background = 'rgba(255, 255, 255, 0.6)';
+                splash.style.bottom = `${waterLevel}%`;
+                splash.style.left = '50%';
+                splash.style.transform = 'translateX(-50%)';
+                splash.style.animation = 'splash 0.5s ease-out forwards';
+                
+                bucketWater.appendChild(splash);
+                
+                // Remove splash after animation
+                setTimeout(() => {
+                    if (splash.parentNode) {
+                        splash.remove();
+                    }
+                }, 500);
+            }
+            
+            function createGameRaindrop() {
+                if (!gameActive) return;
+                
+                const raindrop = document.createElement('div');
+                raindrop.classList.add('raindrop-game');
+                
+                // Random horizontal position
+                const left = Math.random() * (gameContainer.offsetWidth - 15);
+                raindrop.style.left = `${left}px`;
+                
+                // Random speed
+                const speed = 1 + Math.random() * 1.5;
+                raindrop.style.animationDuration = `${speed}s`;
+                
+                gameContainer.appendChild(raindrop);
+                
+                // Remove raindrop after animation completes
+                setTimeout(() => {
+                    if (raindrop.parentNode) {
+                        raindrop.remove();
+                    }
+                }, speed * 1000);
+            }
+            
+            function updateTimer() {
+                if (!gameActive) return;
+                
+                timeLeft--;
+                timeElement.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }
+            
+            function victory() {
+                gameActive = false;
+                clearInterval(gameInterval);
+                clearInterval(raindropInterval);
+                clearInterval(timerInterval);
+                if (leakInterval) clearInterval(leakInterval);
+                
+                // Show victory screen
+                gameResultElement.textContent = "Victory!";
+                gameResultElement.classList.add('victory');
+                finalScoreElement.textContent = score;
+                finalWaterElement.textContent = `${waterLevel}%`;
+                gameOverScreen.style.display = 'flex';
+            }
+            
+            function endGame() {
+                gameActive = false;
+                clearInterval(gameInterval);
+                clearInterval(raindropInterval);
+                clearInterval(timerInterval);
+                if (leakInterval) clearInterval(leakInterval);
+                
+                // Show game over screen
+                gameResultElement.textContent = "Game Over!";
+                gameResultElement.classList.remove('victory');
+                finalScoreElement.textContent = score;
+                finalWaterElement.textContent = `${waterLevel}%`;
+                gameOverScreen.style.display = 'flex';
+            }
+            
+            // Player movement
+            gameContainer.addEventListener('mousemove', (e) => {
+                if (!gameActive) return;
+                
+                const containerRect = gameContainer.getBoundingClientRect();
+                const playerWidth = player.offsetWidth;
+                let newPosition = e.clientX - containerRect.left - (playerWidth / 2);
+                
+                // Keep player within bounds
+                if (newPosition < 0) newPosition = 0;
+                if (newPosition > containerRect.width - playerWidth) {
+                    newPosition = containerRect.width - playerWidth;
+                }
+                
+                player.style.left = `${newPosition}px`;
+            });
+            
+            // Touch support for mobile devices
+            gameContainer.addEventListener('touchmove', (e) => {
+                if (!gameActive) return;
+                
+                e.preventDefault();
+                const containerRect = gameContainer.getBoundingClientRect();
+                const playerWidth = player.offsetWidth;
+                let newPosition = e.touches[0].clientX - containerRect.left - (playerWidth / 2);
+                
+                // Keep player within bounds
+                if (newPosition < 0) newPosition = 0;
+                if (newPosition > containerRect.width - playerWidth) {
+                    newPosition = containerRect.width - playerWidth;
+                }
+                
+                player.style.left = `${newPosition}px`;
+            });
+            
+            // Event listeners for buttons
+            document.getElementById('start-button').addEventListener('click', startGame);
+            document.getElementById('pause-button').addEventListener('click', pauseGame);
+            document.getElementById('restart-button').addEventListener('click', startGame);
+            document.getElementById('light-rain').addEventListener('click', () => startRain(50));
+            document.getElementById('heavy-rain').addEventListener('click', () => startRain(200));
+            
+            // Start with background rain
+            startRain(rainIntensity);
+        });
+    </script>
+</body>
+</html>
